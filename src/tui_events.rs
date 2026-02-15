@@ -1,0 +1,81 @@
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use std::time::Duration;
+
+use crate::tui_app::{App, InputMode};
+
+/// Poll for and handle events. Returns true if an event was processed.
+pub fn handle_events(app: &mut App) -> std::io::Result<bool> {
+    if event::poll(Duration::from_millis(50))? {
+        if let Event::Key(key) = event::read()? {
+            // Only handle Press events (ignore Release on some platforms)
+            if key.kind != KeyEventKind::Press {
+                return Ok(false);
+            }
+            match app.input_mode {
+                InputMode::Normal => handle_normal_mode(app, key),
+                InputMode::Search => handle_search_mode(app, key),
+            }
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+fn handle_normal_mode(app: &mut App, key: KeyEvent) {
+    match key.code {
+        // Quit
+        KeyCode::Char('q') | KeyCode::Esc => {
+            if app.show_detail {
+                app.show_detail = false;
+            } else {
+                app.should_quit = true;
+            }
+        }
+
+        // Navigation
+        KeyCode::Up | KeyCode::Char('k') => app.move_up(),
+        KeyCode::Down | KeyCode::Char('j') => app.move_down(),
+        KeyCode::PageUp => app.page_up(),
+        KeyCode::PageDown => app.page_down(),
+        KeyCode::Home | KeyCode::Char('g') => app.home(),
+        KeyCode::End | KeyCode::Char('G') => app.end(),
+
+        // Search
+        KeyCode::Char('/') => app.enter_search(),
+
+        // Fit filter
+        KeyCode::Char('f') => app.cycle_fit_filter(),
+
+        // Provider toggles (1-9)
+        KeyCode::Char(c) if c.is_ascii_digit() && c != '0' => {
+            let idx = (c as u8 - b'1') as usize;
+            app.toggle_provider(idx);
+        }
+
+        // Detail view
+        KeyCode::Enter => app.toggle_detail(),
+
+        _ => {}
+    }
+}
+
+fn handle_search_mode(app: &mut App, key: KeyEvent) {
+    match key.code {
+        KeyCode::Esc | KeyCode::Enter => app.exit_search(),
+
+        KeyCode::Backspace => app.search_backspace(),
+        KeyCode::Delete => app.search_delete(),
+
+        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            app.clear_search();
+        }
+
+        KeyCode::Char(c) => app.search_input(c),
+
+        // Allow navigation while searching
+        KeyCode::Up => app.move_up(),
+        KeyCode::Down => app.move_down(),
+
+        _ => {}
+    }
+}
