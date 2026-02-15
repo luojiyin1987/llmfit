@@ -6,6 +6,10 @@ Ships with an interactive TUI (default) and a classic CLI mode.
 
 ![demo](demo.gif)
 
+Example of a medium performance home laptop
+
+![home](home_laptop.png)
+
 ---
 
 ## Install
