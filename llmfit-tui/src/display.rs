@@ -1,7 +1,7 @@
-use crate::fit::{FitLevel, ModelFit};
-use crate::hardware::SystemSpecs;
-use crate::models::LlmModel;
 use colored::*;
+use llmfit_core::fit::{FitLevel, ModelFit};
+use llmfit_core::hardware::SystemSpecs;
+use llmfit_core::models::LlmModel;
 use tabled::{Table, Tabled, settings::Style};
 
 #[derive(Tabled)]
